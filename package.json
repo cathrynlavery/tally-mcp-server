@@ -1,0 +1,33 @@
+{
+  "name": "tally-mcp-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MCP server for Tally integration",
+  "bin": {
+    "tally-mcp-server": "build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "tally",
+    "server"
+  ],
+  "author": "",
+  "license": "MIT",
+  "main": "index.js"
+}
