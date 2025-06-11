@@ -86,7 +86,7 @@ class TallyMcpServer {
           },
           {
             name: 'update_tally_form',
-            description: 'Update an existing Tally form',
+            description: 'Update an existing Tally form with comprehensive options including name, status, blocks, and settings',
             inputSchema: {
               type: 'object',
               properties: {
@@ -94,14 +94,155 @@ class TallyMcpServer {
                   type: 'string',
                   description: 'The ID of the form to update',
                 },
-                title: {
+                name: {
                   type: 'string',
-                  description: 'The new title of the form',
+                  description: 'The name/title of the form',
                 },
-                description: {
+                status: {
                   type: 'string',
-                  description: 'The new description of the form',
+                  enum: ['BLANK', 'PUBLISHED', 'DRAFT'],
+                  description: 'The status of the form',
                 },
+                blocks: {
+                  type: 'array',
+                  description: 'Array of form blocks/questions structure',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      uuid: { type: 'string' },
+                      type: { type: 'string' },
+                      groupUuid: { type: 'string' },
+                      groupType: { type: 'string' },
+                      payload: { type: 'object' }
+                    }
+                  }
+                },
+                settings: {
+                  type: 'object',
+                  description: 'Form settings object',
+                  properties: {
+                    language: {
+                      type: 'string',
+                      description: 'Form language'
+                    },
+                    isClosed: {
+                      type: 'boolean',
+                      description: 'Whether the form is closed'
+                    },
+                    closeMessageTitle: {
+                      type: 'string',
+                      description: 'Title shown when form is closed'
+                    },
+                    closeMessageDescription: {
+                      type: 'string',
+                      description: 'Description shown when form is closed'
+                    },
+                    closeTimezone: {
+                      type: 'string',
+                      description: 'Timezone for form closing'
+                    },
+                    closeDate: {
+                      type: 'string',
+                      description: 'Date when form closes'
+                    },
+                    closeTime: {
+                      type: 'string',
+                      description: 'Time when form closes'
+                    },
+                    submissionsLimit: {
+                      type: 'number',
+                      description: 'Maximum number of submissions allowed'
+                    },
+                    uniqueSubmissionKey: {
+                      type: 'string',
+                      description: 'Unique key for submissions'
+                    },
+                    redirectOnCompletion: {
+                      type: 'string',
+                      description: 'URL to redirect to after form completion'
+                    },
+                    hasSelfEmailNotifications: {
+                      type: 'boolean',
+                      description: 'Enable email notifications to form owner'
+                    },
+                    selfEmailTo: {
+                      type: 'string',
+                      description: 'Email address for form owner notifications'
+                    },
+                    selfEmailReplyTo: {
+                      type: 'string',
+                      description: 'Reply-to email for owner notifications'
+                    },
+                    selfEmailSubject: {
+                      type: 'string',
+                      description: 'Subject line for owner notifications'
+                    },
+                    selfEmailFromName: {
+                      type: 'string',
+                      description: 'From name for owner notifications'
+                    },
+                    selfEmailBody: {
+                      type: 'string',
+                      description: 'Email body template for owner notifications'
+                    },
+                    hasRespondentEmailNotifications: {
+                      type: 'boolean',
+                      description: 'Enable email notifications to respondents'
+                    },
+                    respondentEmailTo: {
+                      type: 'string',
+                      description: 'Email field to send respondent notifications to'
+                    },
+                    respondentEmailReplyTo: {
+                      type: 'string',
+                      description: 'Reply-to email for respondent notifications'
+                    },
+                    respondentEmailSubject: {
+                      type: 'string',
+                      description: 'Subject line for respondent notifications'
+                    },
+                    respondentEmailFromName: {
+                      type: 'string',
+                      description: 'From name for respondent notifications'
+                    },
+                    respondentEmailBody: {
+                      type: 'string',
+                      description: 'Email body template for respondent notifications'
+                    },
+                    hasProgressBar: {
+                      type: 'boolean',
+                      description: 'Show progress bar in form'
+                    },
+                    hasPartialSubmissions: {
+                      type: 'boolean',
+                      description: 'Allow partial submissions'
+                    },
+                    pageAutoJump: {
+                      type: 'boolean',
+                      description: 'Auto-advance form pages'
+                    },
+                    saveForLater: {
+                      type: 'boolean',
+                      description: 'Allow saving form for later'
+                    },
+                    styles: {
+                      type: 'string',
+                      description: 'Custom CSS styles for the form'
+                    },
+                    password: {
+                      type: 'string',
+                      description: 'Password protection for the form'
+                    },
+                    submissionsDataRetentionDuration: {
+                      type: 'number',
+                      description: 'Data retention duration for submissions'
+                    },
+                    submissionsDataRetentionUnit: {
+                      type: 'string',
+                      description: 'Data retention unit (days, months, years)'
+                    }
+                  }
+                }
               },
               required: ['formId'],
             },
@@ -278,6 +419,101 @@ class TallyMcpServer {
               required: ['formId', 'webhookId'],
             },
           },
+          {
+            name: 'update_form_status',
+            description: 'Update the status of a form (BLANK, PUBLISHED, DRAFT)',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                formId: {
+                  type: 'string',
+                  description: 'The ID of the form',
+                },
+                status: {
+                  type: 'string',
+                  enum: ['BLANK', 'PUBLISHED', 'DRAFT'],
+                  description: 'The new status for the form',
+                },
+              },
+              required: ['formId', 'status'],
+            },
+          },
+          {
+            name: 'update_form_settings',
+            description: 'Update specific form settings like notifications, closing options, etc.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                formId: {
+                  type: 'string',
+                  description: 'The ID of the form',
+                },
+                isClosed: {
+                  type: 'boolean',
+                  description: 'Whether the form should be closed',
+                },
+                submissionsLimit: {
+                  type: 'number',
+                  description: 'Maximum number of submissions allowed',
+                },
+                redirectOnCompletion: {
+                  type: 'string',
+                  description: 'URL to redirect to after form completion',
+                },
+                hasProgressBar: {
+                  type: 'boolean',
+                  description: 'Show progress bar in form',
+                },
+                hasPartialSubmissions: {
+                  type: 'boolean',
+                  description: 'Allow partial submissions',
+                },
+                password: {
+                  type: 'string',
+                  description: 'Password protection for the form',
+                },
+              },
+              required: ['formId'],
+            },
+          },
+          {
+            name: 'configure_form_notifications',
+            description: 'Configure email notifications for form owner and respondents',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                formId: {
+                  type: 'string',
+                  description: 'The ID of the form',
+                },
+                ownerNotifications: {
+                  type: 'object',
+                  properties: {
+                    enabled: { type: 'boolean' },
+                    emailTo: { type: 'string' },
+                    replyTo: { type: 'string' },
+                    subject: { type: 'string' },
+                    fromName: { type: 'string' },
+                    body: { type: 'string' }
+                  },
+                  description: 'Owner notification settings'
+                },
+                respondentNotifications: {
+                  type: 'object',
+                  properties: {
+                    enabled: { type: 'boolean' },
+                    emailTo: { type: 'string' },
+                    replyTo: { type: 'string' },
+                    subject: { type: 'string' },
+                    fromName: { type: 'string' },
+                    body: { type: 'string' }
+                  },
+                  description: 'Respondent notification settings'
+                }
+              },
+              required: ['formId'],
+            },
+          },
         ],
       };
     });
@@ -294,7 +530,7 @@ class TallyMcpServer {
           case 'get_tally_form':
             return await this.getTallyForm(args as { formId: string });
           case 'update_tally_form':
-            return await this.updateTallyForm(args as { formId: string; title?: string; description?: string });
+            return await this.updateTallyForm(args as { formId: string; name?: string; status?: string; blocks?: any[]; settings?: any });
           case 'delete_tally_form':
             return await this.deleteTallyForm(args as { formId: string });
           case 'get_form_submissions':
@@ -313,6 +549,12 @@ class TallyMcpServer {
             return await this.updateTallyWebhook(args as { formId: string; webhookId: string; url?: string; events?: string[] });
           case 'delete_tally_webhook':
             return await this.deleteTallyWebhook(args as { formId: string; webhookId: string });
+          case 'update_form_status':
+            return await this.updateFormStatus(args as { formId: string; status: string });
+          case 'update_form_settings':
+            return await this.updateFormSettings(args as { formId: string; isClosed?: boolean; submissionsLimit?: number; redirectOnCompletion?: string; hasProgressBar?: boolean; hasPartialSubmissions?: boolean; password?: string });
+          case 'configure_form_notifications':
+            return await this.configureFormNotifications(args as { formId: string; ownerNotifications?: any; respondentNotifications?: any });
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -422,11 +664,13 @@ class TallyMcpServer {
     }
   }
 
-  private async updateTallyForm(args: { formId: string; title?: string; description?: string }): Promise<{ content: Array<{ type: string; text: string }> }> {
+  private async updateTallyForm(args: { formId: string; name?: string; status?: string; blocks?: any[]; settings?: any }): Promise<{ content: Array<{ type: string; text: string }> }> {
     try {
       const updateData: any = {};
-      if (args.title) updateData.title = args.title;
-      if (args.description) updateData.description = args.description;
+      if (args.name) updateData.name = args.name;
+      if (args.status) updateData.status = args.status;
+      if (args.blocks) updateData.blocks = args.blocks;
+      if (args.settings) updateData.settings = args.settings;
 
       const data = await this.makeRequest(`/forms/${args.formId}`, {
         method: 'PATCH',
@@ -679,6 +923,118 @@ class TallyMcpServer {
           {
             type: 'text',
             text: `Error deleting webhook: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+      };
+    }
+  }
+
+  private async updateFormStatus(args: { formId: string; status: string }): Promise<{ content: Array<{ type: string; text: string }> }> {
+    try {
+      const data = await this.makeRequest(`/forms/${args.formId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: args.status,
+        }),
+      });
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Form status updated to ${args.status} successfully:\n${JSON.stringify(data, null, 2)}`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error updating form status: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+      };
+    }
+  }
+
+  private async updateFormSettings(args: { formId: string; isClosed?: boolean; submissionsLimit?: number; redirectOnCompletion?: string; hasProgressBar?: boolean; hasPartialSubmissions?: boolean; password?: string }): Promise<{ content: Array<{ type: string; text: string }> }> {
+    try {
+      const settings: any = {};
+      if (args.isClosed !== undefined) settings.isClosed = args.isClosed;
+      if (args.submissionsLimit !== undefined) settings.submissionsLimit = args.submissionsLimit;
+      if (args.redirectOnCompletion !== undefined) settings.redirectOnCompletion = args.redirectOnCompletion;
+      if (args.hasProgressBar !== undefined) settings.hasProgressBar = args.hasProgressBar;
+      if (args.hasPartialSubmissions !== undefined) settings.hasPartialSubmissions = args.hasPartialSubmissions;
+      if (args.password !== undefined) settings.password = args.password;
+
+      const data = await this.makeRequest(`/forms/${args.formId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          settings: settings,
+        }),
+      });
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Form settings updated successfully:\n${JSON.stringify(data, null, 2)}`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error updating form settings: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+      };
+    }
+  }
+
+  private async configureFormNotifications(args: { formId: string; ownerNotifications?: any; respondentNotifications?: any }): Promise<{ content: Array<{ type: string; text: string }> }> {
+    try {
+      const settings: any = {};
+      
+      if (args.ownerNotifications) {
+        if (args.ownerNotifications.enabled !== undefined) settings.hasSelfEmailNotifications = args.ownerNotifications.enabled;
+        if (args.ownerNotifications.emailTo) settings.selfEmailTo = args.ownerNotifications.emailTo;
+        if (args.ownerNotifications.replyTo) settings.selfEmailReplyTo = args.ownerNotifications.replyTo;
+        if (args.ownerNotifications.subject) settings.selfEmailSubject = args.ownerNotifications.subject;
+        if (args.ownerNotifications.fromName) settings.selfEmailFromName = args.ownerNotifications.fromName;
+        if (args.ownerNotifications.body) settings.selfEmailBody = args.ownerNotifications.body;
+      }
+      
+      if (args.respondentNotifications) {
+        if (args.respondentNotifications.enabled !== undefined) settings.hasRespondentEmailNotifications = args.respondentNotifications.enabled;
+        if (args.respondentNotifications.emailTo) settings.respondentEmailTo = args.respondentNotifications.emailTo;
+        if (args.respondentNotifications.replyTo) settings.respondentEmailReplyTo = args.respondentNotifications.replyTo;
+        if (args.respondentNotifications.subject) settings.respondentEmailSubject = args.respondentNotifications.subject;
+        if (args.respondentNotifications.fromName) settings.respondentEmailFromName = args.respondentNotifications.fromName;
+        if (args.respondentNotifications.body) settings.respondentEmailBody = args.respondentNotifications.body;
+      }
+
+      const data = await this.makeRequest(`/forms/${args.formId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          settings: settings,
+        }),
+      });
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Form notifications configured successfully:\n${JSON.stringify(data, null, 2)}`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error configuring form notifications: ${error instanceof Error ? error.message : 'Unknown error'}`,
           },
         ],
       };
