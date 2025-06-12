@@ -1,15 +1,18 @@
 # Tally MCP Server
 
-A comprehensive Model Context Protocol (MCP) server for [Tally](https://lttlmg.ht/tally) form management. This server provides 18 powerful tools to manage forms, submissions, questions, webhooks, and advanced form building directly through Claude Desktop.
+A comprehensive Model Context Protocol (MCP) server for [Tally](https://lttlmg.ht/tally) form management. This server provides 23 powerful tools to manage forms, submissions, questions, webhooks, and enterprise-grade conditional logic directly through Claude Desktop.
 
 > **Built by [@cathrynlavery](https://twitter.com/cathrynlavery)** | **Try [Claude Desktop](https://claude.ai/download)** | **Get [Tally Forms](https://lttlmg.ht/tally)**
 
 ## ✨ Features
 
-- **18 comprehensive tools** for complete Tally form management
+- **23 comprehensive tools** for complete Tally form management
+- **Enterprise-grade conditional logic** with critical error prevention
 - **Advanced form building** with block types documentation and templates
 - **Form templates** for common use cases (contact, survey, registration, etc.)
 - **Complete block type reference** covering 20+ input, layout, and logic blocks
+- **Critical validation tools** to prevent survey-breaking logic errors
+- **Dynamic question management** for complex conditional option sets
 - **Full API coverage** including advanced form editing capabilities
 - **Seamless Claude Desktop integration** via MCP protocol
 - **Type-safe** with proper JSON schema validation
@@ -108,7 +111,7 @@ TALLY_API_KEY=tally_your_actual_api_key_here
 2. Start a new conversation
 3. Try: **"Can you list my Tally forms?"**
 
-## 🛠️ Available Tools (18 Total)
+## 🤔 Available Tools (23 Total)
 
 ### Forms Management (5 tools)
 - `get_tally_forms` - List all your forms
@@ -135,6 +138,13 @@ TALLY_API_KEY=tally_your_actual_api_key_here
 - `get_tally_block_types` - Get comprehensive documentation of all available form block types
 - `get_tally_form_templates` - Get pre-built form templates for common use cases
 
+### Advanced Conditional Logic (5 tools)
+- `create_conditional_logic_block` - Create properly structured conditional logic blocks with validation
+- `validate_form_logic_flow` - Analyze and validate the logical flow of forms to identify issues
+- `get_conditional_logic_templates` - Get pre-built conditional logic templates for common scenarios
+- `validate_multiple_choice_logic` - **CRITICAL** - Prevent "equals" vs "contains" errors that break multiple choice conditional logic
+- `create_dynamic_question_sets` - **CRITICAL** - Create questions with conditional option sets that change based on previous answers
+
 ### Form Editing Helpers (3 tools)
 - `update_form_status` - Quick status changes (BLANK, PUBLISHED, DRAFT)
 - `update_form_settings` - Update common form settings
@@ -149,6 +159,10 @@ Once configured, you can interact naturally with your Tally forms:
 - **"What types of form blocks are available in Tally?"**
 - **"Give me a contact form template"**
 - **"Build a survey with rating questions and multiple choice"**
+- **"Create conditional logic that shows different questions based on user type"**
+- **"Validate my multiple choice logic to prevent survey failures"**
+- **"Create a dynamic question like Q5 in BestSelf survey with conditional option sets"**
+- **"Check my conditional logic flow for dead ends"**
 - **"Update my contact form to published status"**
 - **"Get the latest 10 submissions for form xyz"**
 - **"Set up email notifications for my survey"**
@@ -166,6 +180,16 @@ The server now includes comprehensive form building support:
 - **Block Type Reference**: Complete documentation of all 20+ Tally block types including input fields, layout elements, and logic blocks
 - **Form Templates**: Pre-built templates for contact forms, surveys, registration forms, and more
 - **Professional Structures**: Ready-to-use form layouts following best practices
+- **Advanced Conditional Logic**: Enterprise-grade conditional logic with validation and error prevention
+- **Critical Error Prevention**: Automatic detection of logic errors that would break surveys
+- **Dynamic Question Management**: Handle complex questions with conditional option sets
+
+### Critical Conditional Logic Features
+
+- **Multiple Choice Validation**: Prevents the critical "equals" vs "contains" error that breaks multiple choice conditional logic
+- **Dynamic Question Sets**: Create sophisticated questions like Q5/Q6 in complex surveys that show different options based on previous answers
+- **Logic Flow Analysis**: Comprehensive validation to catch unreachable blocks, circular logic, and missing references
+- **Enterprise Patterns**: Templates for progressive disclosure, branching surveys, qualification flows, and more
 
 ### Block Types Available
 

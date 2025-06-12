@@ -554,6 +554,182 @@ class TallyMcpServer {
               required: [],
             },
           },
+          {
+            name: 'create_conditional_logic_block',
+            description: 'Create properly structured conditional logic blocks with validation for form flow control',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                triggerField: {
+                  type: 'string',
+                  description: 'UUID of the field that triggers the condition',
+                },
+                conditions: {
+                  type: 'array',
+                  description: 'Array of conditional rules',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      operator: {
+                        type: 'string',
+                        enum: ['equals', 'not_equals', 'contains', 'not_contains', 'greater_than', 'less_than', 'greater_equal', 'less_equal', 'is_empty', 'is_not_empty', 'starts_with', 'ends_with'],
+                        description: 'Comparison operator for the condition'
+                      },
+                      value: {
+                        type: 'string',
+                        description: 'Value to compare against (not needed for is_empty/is_not_empty)'
+                      },
+                      targetBlock: {
+                        type: 'string',
+                        description: 'UUID of block to jump to if condition is met'
+                      }
+                    },
+                    required: ['operator', 'targetBlock']
+                  }
+                },
+                defaultTarget: {
+                  type: 'string',
+                  description: 'UUID of block to jump to if no conditions are met'
+                },
+                logicType: {
+                  type: 'string',
+                  enum: ['simple_branch', 'multi_branch', 'progressive_disclosure', 'skip_logic'],
+                  description: 'Type of conditional logic pattern'
+                }
+              },
+              required: ['triggerField', 'conditions']
+            },
+          },
+          {
+            name: 'validate_form_logic_flow',
+            description: 'Analyze and validate the logical flow of a form to identify potential issues or dead ends',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                blocks: {
+                  type: 'array',
+                  description: 'Array of form blocks to analyze for logic flow',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      uuid: { type: 'string' },
+                      type: { type: 'string' },
+                      payload: { type: 'object' }
+                    },
+                    required: ['uuid', 'type']
+                  }
+                }
+              },
+              required: ['blocks']
+            },
+          },
+          {
+            name: 'get_conditional_logic_templates',
+            description: 'Get pre-built conditional logic templates for common scenarios like progressive disclosure, skip logic, and branching surveys',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                templateType: {
+                  type: 'string',
+                  enum: ['simple_skip', 'progressive_disclosure', 'branching_survey', 'qualification_flow', 'feedback_routing', 'product_recommendation'],
+                  description: 'Type of conditional logic template'
+                }
+              },
+              required: []
+            },
+          },
+          {
+            name: 'validate_multiple_choice_logic',
+            description: 'Validate conditional logic for multiple choice questions to prevent common errors like using "equals" instead of "contains"',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                triggerQuestion: {
+                  type: 'object',
+                  properties: {
+                    uuid: { type: 'string' },
+                    type: { type: 'string' },
+                    payload: { type: 'object' }
+                  },
+                  description: 'The multiple choice question that triggers conditional logic',
+                  required: ['uuid', 'type', 'payload']
+                },
+                conditionalLogic: {
+                  type: 'array',
+                  description: 'Array of conditional logic blocks that reference the trigger question',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      conditions: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            operator: { type: 'string' },
+                            value: { type: 'string' },
+                            targetBlock: { type: 'string' }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              required: ['triggerQuestion', 'conditionalLogic']
+            },
+          },
+          {
+            name: 'create_dynamic_question_sets',
+            description: 'Create questions with conditional option sets that change based on previous answers (like Q5/Q6 in complex surveys)',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                questionLabel: {
+                  type: 'string',
+                  description: 'Base label for the question'
+                },
+                questionType: {
+                  type: 'string',
+                  enum: ['INPUT_MULTIPLE_CHOICE', 'INPUT_DROPDOWN', 'INPUT_CHECKBOXES'],
+                  description: 'Type of input question'
+                },
+                triggerField: {
+                  type: 'string',
+                  description: 'UUID of the field that determines which option set to show'
+                },
+                conditionalOptionSets: {
+                  type: 'array',
+                  description: 'Different option sets to show based on trigger field values',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      triggerValue: {
+                        type: 'string',
+                        description: 'Value from trigger field that activates this option set'
+                      },
+                      questionSuffix: {
+                        type: 'string',
+                        description: 'Additional text to append to question label for this condition'
+                      },
+                      options: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            text: { type: 'string' },
+                            value: { type: 'string' }
+                          },
+                          required: ['text', 'value']
+                        }
+                      }
+                    },
+                    required: ['triggerValue', 'options']
+                  }
+                }
+              },
+              required: ['questionLabel', 'questionType', 'triggerField', 'conditionalOptionSets']
+            },
+          },
         ],
       };
     });
@@ -599,6 +775,16 @@ class TallyMcpServer {
             return await this.getTallyBlockTypes();
           case 'get_tally_form_templates':
             return await this.getTallyFormTemplates(args as { templateType?: string });
+          case 'create_conditional_logic_block':
+            return await this.createConditionalLogicBlock(args as { triggerField: string; conditions: any[]; defaultTarget: string; logicType: string });
+          case 'validate_form_logic_flow':
+            return await this.validateFormLogicFlow(args as { blocks: any[] });
+          case 'get_conditional_logic_templates':
+            return await this.getConditionalLogicTemplates(args as { templateType?: string });
+          case 'validate_multiple_choice_logic':
+            return await this.validateMultipleChoiceLogic(args as { triggerQuestion: any; conditionalLogic: any[] });
+          case 'create_dynamic_question_sets':
+            return await this.createDynamicQuestionSets(args as { questionLabel: string; questionType: string; triggerField: string; conditionalOptionSets: any[] });
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -1653,6 +1839,775 @@ Each template includes:
 - Common use case patterns
 
 These templates provide a starting point that you can customize by modifying the blocks, adding new fields, or adjusting settings to match specific requirements.`,
+          },
+        ],
+      };
+    }
+  }
+
+  private async createConditionalLogicBlock(args: { triggerField: string; conditions: any[]; defaultTarget?: string; logicType?: string }): Promise<{ content: Array<{ type: string; text: string }> }> {
+    try {
+      // Generate a unique UUID for the logic block
+      const logicBlockUuid = `logic-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Validate conditions
+      for (const condition of args.conditions) {
+        if (!condition.operator || !condition.targetBlock) {
+          throw new Error('Each condition must have an operator and targetBlock');
+        }
+        
+        // Check if value is required for the operator
+        const noValueOperators = ['is_empty', 'is_not_empty'];
+        if (!noValueOperators.includes(condition.operator) && !condition.value) {
+          throw new Error(`Value is required for operator '${condition.operator}'`);
+        }
+      }
+
+      const logicBlock = {
+        uuid: logicBlockUuid,
+        type: 'LOGIC_JUMP',
+        payload: {
+          triggerField: args.triggerField,
+          conditions: args.conditions.map(condition => ({
+            field: args.triggerField,
+            operator: condition.operator,
+            value: condition.value,
+            jumpTo: condition.targetBlock
+          })),
+          defaultJumpTo: args.defaultTarget || null,
+          logicType: args.logicType || 'simple_branch'
+        }
+      };
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Conditional Logic Block Created Successfully:
+
+${JSON.stringify(logicBlock, null, 2)}
+
+## How to Use:
+1. Add this block to your form's blocks array
+2. Place it after the trigger field (${args.triggerField})
+3. Ensure all target blocks exist in your form
+4. Test the logic flow using validate_form_logic_flow tool
+
+## Logic Flow:
+- Trigger Field: ${args.triggerField}
+- Logic Type: ${args.logicType || 'simple_branch'}
+- Conditions: ${args.conditions.length}
+- Default Target: ${args.defaultTarget || 'Next sequential block'}
+
+This block will evaluate conditions when the trigger field changes and redirect users to appropriate sections of your form.`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error creating conditional logic block: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+      };
+    }
+  }
+
+  private async validateFormLogicFlow(args: { blocks: any[] }): Promise<{ content: Array<{ type: string; text: string }> }> {
+    try {
+      const issues: string[] = [];
+      const warnings: string[] = [];
+      const blockMap = new Map();
+      const logicBlocks: any[] = [];
+      const inputBlocks: any[] = [];
+
+      // Build block map and categorize blocks
+      for (const block of args.blocks) {
+        blockMap.set(block.uuid, block);
+        if (block.type === 'LOGIC_JUMP') {
+          logicBlocks.push(block);
+        } else if (block.type.startsWith('INPUT_')) {
+          inputBlocks.push(block);
+        }
+      }
+
+      // Validate logic blocks
+      for (const logicBlock of logicBlocks) {
+        const payload = logicBlock.payload;
+        
+        // Check if trigger field exists
+        if (payload.triggerField && !blockMap.has(payload.triggerField)) {
+          issues.push(`Logic block ${logicBlock.uuid} references non-existent trigger field: ${payload.triggerField}`);
+        }
+
+        // Check conditions
+        if (payload.conditions) {
+          for (const condition of payload.conditions) {
+            if (condition.jumpTo && !blockMap.has(condition.jumpTo)) {
+              issues.push(`Logic block ${logicBlock.uuid} has condition jumping to non-existent block: ${condition.jumpTo}`);
+            }
+          }
+        }
+
+        // Check default jump target
+        if (payload.defaultJumpTo && !blockMap.has(payload.defaultJumpTo)) {
+          issues.push(`Logic block ${logicBlock.uuid} has default jump to non-existent block: ${payload.defaultJumpTo}`);
+        }
+      }
+
+      // Check for unreachable blocks
+      const reachableBlocks = new Set();
+      const startBlock = args.blocks[0];
+      if (startBlock) {
+        const traverseBlocks = (blockUuid: string, visited: Set<string> = new Set()) => {
+          if (visited.has(blockUuid) || !blockMap.has(blockUuid)) return;
+          
+          visited.add(blockUuid);
+          reachableBlocks.add(blockUuid);
+          
+          const block = blockMap.get(blockUuid);
+          if (block.type === 'LOGIC_JUMP' && block.payload.conditions) {
+            for (const condition of block.payload.conditions) {
+              if (condition.jumpTo) {
+                traverseBlocks(condition.jumpTo, visited);
+              }
+            }
+            if (block.payload.defaultJumpTo) {
+              traverseBlocks(block.payload.defaultJumpTo, visited);
+            }
+          }
+        };
+
+        traverseBlocks(startBlock.uuid);
+      }
+
+      // Find unreachable blocks
+      for (const block of args.blocks) {
+        if (!reachableBlocks.has(block.uuid) && block !== startBlock) {
+          warnings.push(`Block ${block.uuid} (${block.type}) may be unreachable`);
+        }
+      }
+
+      // Check for circular logic
+      const detectCircularLogic = () => {
+        for (const logicBlock of logicBlocks) {
+          const visited = new Set();
+          const checkCircular = (blockUuid: string): boolean => {
+            if (visited.has(blockUuid)) return true;
+            visited.add(blockUuid);
+            
+            const block = blockMap.get(blockUuid);
+            if (block && block.type === 'LOGIC_JUMP' && block.payload.conditions) {
+              for (const condition of block.payload.conditions) {
+                if (condition.jumpTo && checkCircular(condition.jumpTo)) {
+                  return true;
+                }
+              }
+            }
+            return false;
+          };
+          
+          if (checkCircular(logicBlock.uuid)) {
+            warnings.push(`Potential circular logic detected starting from block ${logicBlock.uuid}`);
+          }
+        }
+      };
+
+      detectCircularLogic();
+
+      const validationResult = {
+        status: issues.length === 0 ? 'VALID' : 'INVALID',
+        totalBlocks: args.blocks.length,
+        inputBlocks: inputBlocks.length,
+        logicBlocks: logicBlocks.length,
+        reachableBlocks: reachableBlocks.size,
+        issues: issues,
+        warnings: warnings,
+        recommendations: [
+          'Test all conditional paths with different input combinations',
+          'Ensure all logic blocks have appropriate default targets',
+          'Consider adding confirmation steps before critical logic branches',
+          'Use descriptive block UUIDs for easier debugging'
+        ]
+      };
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Form Logic Flow Validation Results:
+
+${JSON.stringify(validationResult, null, 2)}
+
+## Summary:
+- Form Status: ${validationResult.status}
+- Total Blocks: ${validationResult.totalBlocks}
+- Logic Blocks: ${validationResult.logicBlocks}
+- Issues Found: ${issues.length}
+- Warnings: ${warnings.length}
+
+${issues.length > 0 ? '⚠️ Critical Issues:\n' + issues.map(issue => `- ${issue}`).join('\n') + '\n' : '✅ No critical issues found\n'}
+
+${warnings.length > 0 ? '⚠️ Warnings:\n' + warnings.map(warning => `- ${warning}`).join('\n') + '\n' : ''}
+
+## Recommendations:
+${validationResult.recommendations.map(rec => `- ${rec}`).join('\n')}`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error validating form logic flow: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+      };
+    }
+  }
+
+  private async getConditionalLogicTemplates(args: { templateType?: string }): Promise<{ content: Array<{ type: string; text: string }> }> {
+    const templates = {
+      simple_skip: {
+        name: "Simple Skip Logic",
+        description: "Skip sections based on yes/no answers",
+        example: {
+          triggerField: "has-experience-uuid",
+          conditions: [
+            {
+              operator: "equals",
+              value: "no",
+              targetBlock: "beginner-section-uuid"
+            },
+            {
+              operator: "equals", 
+              value: "yes",
+              targetBlock: "advanced-section-uuid"
+            }
+          ],
+          defaultTarget: "general-section-uuid",
+          logicType: "simple_branch",
+          useCase: "Skip beginner questions for experienced users"
+        }
+      },
+      progressive_disclosure: {
+        name: "Progressive Disclosure",
+        description: "Show additional questions based on previous answers",
+        example: {
+          triggerField: "interest-level-uuid",
+          conditions: [
+            {
+              operator: "equals",
+              value: "very-interested",
+              targetBlock: "detailed-questions-uuid"
+            },
+            {
+              operator: "equals",
+              value: "somewhat-interested", 
+              targetBlock: "basic-questions-uuid"
+            }
+          ],
+          defaultTarget: "thank-you-uuid",
+          logicType: "progressive_disclosure",
+          useCase: "Show more detailed questions only to highly interested users"
+        }
+      },
+      branching_survey: {
+        name: "Branching Survey",
+        description: "Different question paths based on user type",
+        example: {
+          triggerField: "user-type-uuid",
+          conditions: [
+            {
+              operator: "equals",
+              value: "customer",
+              targetBlock: "customer-feedback-uuid"
+            },
+            {
+              operator: "equals",
+              value: "prospect",
+              targetBlock: "lead-qualification-uuid"
+            },
+            {
+              operator: "equals",
+              value: "partner",
+              targetBlock: "partnership-questions-uuid"
+            }
+          ],
+          defaultTarget: "general-feedback-uuid",
+          logicType: "multi_branch",
+          useCase: "Route users to different question sets based on their relationship type"
+        }
+      },
+      qualification_flow: {
+        name: "Qualification Flow",
+        description: "Determine user eligibility and route accordingly",
+        example: {
+          triggerField: "budget-range-uuid",
+          conditions: [
+            {
+              operator: "greater_equal",
+              value: "10000",
+              targetBlock: "enterprise-questions-uuid"
+            },
+            {
+              operator: "greater_equal",
+              value: "1000",
+              targetBlock: "professional-questions-uuid"
+            }
+          ],
+          defaultTarget: "basic-plan-questions-uuid",
+          logicType: "qualification_flow",
+          useCase: "Route users to appropriate pricing tiers based on budget"
+        }
+      },
+      feedback_routing: {
+        name: "Feedback Routing",
+        description: "Route feedback to appropriate departments",
+        example: {
+          triggerField: "feedback-category-uuid",
+          conditions: [
+            {
+              operator: "equals",
+              value: "technical-issue",
+              targetBlock: "technical-details-uuid"
+            },
+            {
+              operator: "equals",
+              value: "billing-question",
+              targetBlock: "billing-details-uuid"
+            },
+            {
+              operator: "equals",
+              value: "feature-request",
+              targetBlock: "feature-details-uuid"
+            }
+          ],
+          defaultTarget: "general-feedback-uuid",
+          logicType: "feedback_routing",
+          useCase: "Collect specific information based on feedback type"
+        }
+      },
+      product_recommendation: {
+        name: "Product Recommendation",
+        description: "Recommend products based on user needs",
+        example: {
+          triggerField: "company-size-uuid",
+          conditions: [
+            {
+              operator: "equals",
+              value: "1-10",
+              targetBlock: "startup-products-uuid"
+            },
+            {
+              operator: "equals",
+              value: "11-100",
+              targetBlock: "smb-products-uuid"
+            },
+            {
+              operator: "contains",
+              value: "100+",
+              targetBlock: "enterprise-products-uuid"
+            }
+          ],
+          defaultTarget: "general-products-uuid",
+          logicType: "product_recommendation",
+          useCase: "Show relevant products based on company size"
+        }
+      }
+    };
+
+    if (args.templateType && templates[args.templateType as keyof typeof templates]) {
+      const template = templates[args.templateType as keyof typeof templates];
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `${template.name} Template:
+
+${JSON.stringify(template, null, 2)}
+
+## Implementation Steps:
+1. Use create_conditional_logic_block with these parameters:
+   - triggerField: "${template.example.triggerField}"
+   - conditions: ${JSON.stringify(template.example.conditions, null, 2)}
+   - defaultTarget: "${template.example.defaultTarget}"
+   - logicType: "${template.example.logicType}"
+
+2. Ensure all referenced blocks exist in your form
+3. Place the logic block after the trigger field
+4. Test the flow with validate_form_logic_flow
+
+## Use Case:
+${template.example.useCase}
+
+This template provides a proven pattern for ${template.description.toLowerCase()}.`,
+          },
+        ],
+      };
+    } else {
+      const templateList = Object.entries(templates).map(([key, template]) => ({
+        type: key,
+        name: template.name,
+        description: template.description,
+        useCase: template.example.useCase
+      }));
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Available Conditional Logic Templates:
+
+${JSON.stringify(templateList, null, 2)}
+
+## Template Categories:
+
+### Basic Logic:
+- **simple_skip**: Basic yes/no branching
+- **progressive_disclosure**: Show more questions based on interest
+
+### Advanced Logic:
+- **branching_survey**: Multiple paths based on user type
+- **qualification_flow**: Route based on eligibility criteria
+- **feedback_routing**: Department-specific question flows
+- **product_recommendation**: Personalized product suggestions
+
+To get a specific template, call this tool with templateType parameter set to one of: ${Object.keys(templates).join(', ')}
+
+Each template includes:
+- Complete conditional logic structure
+- Real-world use case examples
+- Implementation instructions
+- Best practice recommendations
+
+Use these templates as starting points for building sophisticated form logic that adapts to user responses.`,
+          },
+        ],
+      };
+    }
+  }
+
+  private async validateMultipleChoiceLogic(args: { triggerQuestion: any; conditionalLogic: any[] }): Promise<{ content: Array<{ type: string; text: string }> }> {
+    try {
+      const issues: string[] = [];
+      const warnings: string[] = [];
+      const recommendations: string[] = [];
+      
+      // Check if trigger question is actually multiple choice
+      const isMultipleChoice = ['INPUT_MULTIPLE_CHOICE', 'INPUT_CHECKBOXES'].includes(args.triggerQuestion.type);
+      const allowsMultipleSelections = args.triggerQuestion.type === 'INPUT_CHECKBOXES' || 
+        (args.triggerQuestion.type === 'INPUT_MULTIPLE_CHOICE' && args.triggerQuestion.payload?.maxSelections > 1);
+
+      if (!isMultipleChoice) {
+        warnings.push(`Question type ${args.triggerQuestion.type} is not a multiple choice question. This validation is intended for multiple choice questions.`);
+      }
+
+      // Analyze each conditional logic block
+      for (let i = 0; i < args.conditionalLogic.length; i++) {
+        const logicBlock = args.conditionalLogic[i];
+        
+        if (!logicBlock.conditions || !Array.isArray(logicBlock.conditions)) {
+          issues.push(`Logic block ${i + 1} is missing conditions array`);
+          continue;
+        }
+
+        for (let j = 0; j < logicBlock.conditions.length; j++) {
+          const condition = logicBlock.conditions[j];
+          
+          // CRITICAL CHECK: equals vs contains for multiple choice
+          if (condition.operator === 'equals' && isMultipleChoice) {
+            if (allowsMultipleSelections) {
+              issues.push(`🚨 CRITICAL ERROR - Logic block ${i + 1}, condition ${j + 1}: Using "equals" operator with multiple choice question that allows multiple selections. This will fail when users select multiple options. Use "contains" instead.`);
+            } else {
+              warnings.push(`Logic block ${i + 1}, condition ${j + 1}: Using "equals" with single-select multiple choice. Consider "contains" for consistency and future-proofing.`);
+            }
+          }
+
+          // Check for proper multiple choice operators
+          const multipleChoiceOperators = ['contains', 'not_contains'];
+          const singleValueOperators = ['equals', 'not_equals'];
+          
+          if (isMultipleChoice && singleValueOperators.includes(condition.operator)) {
+            if (allowsMultipleSelections) {
+              issues.push(`Logic block ${i + 1}, condition ${j + 1}: Operator "${condition.operator}" is incompatible with multiple selection questions. Use "contains" or "not_contains".`);
+            }
+          }
+
+          // Validate condition structure
+          if (!condition.value && !['is_empty', 'is_not_empty'].includes(condition.operator)) {
+            issues.push(`Logic block ${i + 1}, condition ${j + 1}: Missing value for operator "${condition.operator}"`);
+          }
+
+          if (!condition.targetBlock) {
+            issues.push(`Logic block ${i + 1}, condition ${j + 1}: Missing targetBlock`);
+          }
+
+          // Check if value matches available options
+          if (condition.value && args.triggerQuestion.payload?.options) {
+            const optionValues = args.triggerQuestion.payload.options.map((opt: any) => opt.value || opt.text);
+            if (!optionValues.includes(condition.value)) {
+              warnings.push(`Logic block ${i + 1}, condition ${j + 1}: Value "${condition.value}" does not match any available options: [${optionValues.join(', ')}]`);
+            }
+          }
+        }
+      }
+
+      // Generate recommendations based on findings
+      if (isMultipleChoice && allowsMultipleSelections) {
+        recommendations.push('✅ For multiple selection questions, always use "contains" operator');
+        recommendations.push('✅ Test with users selecting 1, 2, and maximum number of options');
+        recommendations.push('✅ Consider using "not_contains" for exclusion logic');
+      }
+
+      if (args.triggerQuestion.payload?.options?.length > 5) {
+        recommendations.push('⚠️ Question has many options - consider grouping similar conditions');
+      }
+
+      recommendations.push('🧪 Test all conditional paths thoroughly');
+      recommendations.push('📱 Verify logic works correctly on mobile devices');
+
+      const validationResult = {
+        status: issues.length === 0 ? 'VALID' : 'INVALID',
+        triggerQuestion: {
+          uuid: args.triggerQuestion.uuid,
+          type: args.triggerQuestion.type,
+          allowsMultipleSelections: allowsMultipleSelections,
+          optionCount: args.triggerQuestion.payload?.options?.length || 0
+        },
+        logicBlocks: args.conditionalLogic.length,
+        totalConditions: args.conditionalLogic.reduce((sum, block) => sum + (block.conditions?.length || 0), 0),
+        issues: issues,
+        warnings: warnings,
+        recommendations: recommendations
+      };
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Multiple Choice Logic Validation Results:
+
+${JSON.stringify(validationResult, null, 2)}
+
+## Summary:
+- Validation Status: ${validationResult.status}
+- Question Type: ${args.triggerQuestion.type}
+- Allows Multiple Selections: ${allowsMultipleSelections}
+- Logic Blocks: ${validationResult.logicBlocks}
+- Total Conditions: ${validationResult.totalConditions}
+- Critical Issues: ${issues.length}
+- Warnings: ${warnings.length}
+
+${issues.length > 0 ? '🚨 CRITICAL ISSUES (Will Break Survey):\n' + issues.map((issue, i) => `${i + 1}. ${issue}`).join('\n') + '\n' : ''}
+
+${warnings.length > 0 ? '⚠️ WARNINGS:\n' + warnings.map((warning, i) => `${i + 1}. ${warning}`).join('\n') + '\n' : ''}
+
+## Recommendations:
+${recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n')}
+
+${issues.length === 0 ? '✅ Logic validation passed! Your conditional logic should work correctly with multiple choice questions.' : '❌ Fix critical issues before deploying to prevent survey failures.'}`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error validating multiple choice logic: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+      };
+    }
+  }
+
+  private async createDynamicQuestionSets(args: { questionLabel: string; questionType: string; triggerField: string; conditionalOptionSets: any[] }): Promise<{ content: Array<{ type: string; text: string }> }> {
+    try {
+      const questionBlocks: any[] = [];
+      const logicBlocks: any[] = [];
+      
+      // Validate input
+      if (!args.conditionalOptionSets || args.conditionalOptionSets.length === 0) {
+        throw new Error('At least one conditional option set is required');
+      }
+
+      // Generate base question UUID
+      const baseQuestionUuid = `dynamic-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Create a question block for each conditional option set
+      for (let i = 0; i < args.conditionalOptionSets.length; i++) {
+        const optionSet = args.conditionalOptionSets[i];
+        const questionUuid = i === 0 ? baseQuestionUuid : `${baseQuestionUuid}-variant-${i + 1}`;
+        
+        // Validate option set structure
+        if (!optionSet.triggerValue) {
+          throw new Error(`Option set ${i + 1} is missing triggerValue`);
+        }
+        
+        if (!optionSet.options || !Array.isArray(optionSet.options) || optionSet.options.length === 0) {
+          throw new Error(`Option set ${i + 1} is missing options array`);
+        }
+
+        // Generate options with UUIDs
+        const processedOptions = optionSet.options.map((option: any, optIndex: number) => ({
+          uuid: `${questionUuid}-opt-${optIndex + 1}`,
+          text: option.text,
+          value: option.value || option.text.toLowerCase().replace(/\s+/g, '-')
+        }));
+
+        // Create the question block
+        const questionBlock = {
+          uuid: questionUuid,
+          type: args.questionType,
+          payload: {
+            label: optionSet.questionSuffix ? 
+              `${args.questionLabel}${optionSet.questionSuffix}` : 
+              args.questionLabel,
+            required: true,
+            options: processedOptions,
+            // Add metadata for dynamic question management
+            dynamicContext: {
+              baseQuestion: baseQuestionUuid,
+              triggerField: args.triggerField,
+              triggerValue: optionSet.triggerValue,
+              variantIndex: i
+            }
+          }
+        };
+
+        questionBlocks.push(questionBlock);
+
+        // Create logic block to show this question variant
+        if (i > 0) { // First variant is default, others need logic
+          const logicBlockUuid = `logic-${questionUuid}`;
+          const logicBlock = {
+            uuid: logicBlockUuid,
+            type: 'LOGIC_JUMP',
+            payload: {
+              triggerField: args.triggerField,
+              conditions: [
+                {
+                  field: args.triggerField,
+                  operator: 'contains', // Use contains for multiple choice compatibility
+                  value: optionSet.triggerValue,
+                  jumpTo: questionUuid
+                }
+              ],
+              logicType: 'dynamic_question_routing',
+              questionContext: {
+                baseQuestion: baseQuestionUuid,
+                variant: i + 1
+              }
+            }
+          };
+          
+          logicBlocks.push(logicBlock);
+        }
+      }
+
+      // Generate implementation instructions
+      const implementationSteps = [
+        '1. Add all question blocks to your form in sequence',
+        '2. Place logic blocks immediately after the trigger field',
+        '3. Set the first question variant as visible by default',
+        '4. Hide other variants initially (they\'ll be shown by logic)',
+        '5. Test with different trigger field selections',
+        '6. Validate using validate_multiple_choice_logic tool'
+      ];
+
+      // Generate BestSelf survey specific example
+      const bestSelfExample = {
+        description: 'Example implementation for BestSelf Q5 Priority Challenge question',
+        triggerField: 'q4-priorities-uuid',
+        questionLabel: 'What\'s your main challenge in this area?',
+        implementation: {
+          'Personal productivity': {
+            options: [
+              'Difficulty executing on ideas',
+              'Feeling overwhelmed by tasks',
+              'Struggling to complete projects',
+              'Poor time management',
+              'Can\'t prioritize effectively'
+            ]
+          },
+          'Relationships': {
+            options: [
+              'Finding quality time with loved ones',
+              'Staying present during conversations',
+              'Communication difficulties',
+              'Feeling disconnected from partner/friends'
+            ]
+          }
+        }
+      };
+
+      const result = {
+        success: true,
+        totalQuestionBlocks: questionBlocks.length,
+        totalLogicBlocks: logicBlocks.length,
+        baseQuestionUuid: baseQuestionUuid,
+        questionBlocks: questionBlocks,
+        logicBlocks: logicBlocks,
+        implementationSteps: implementationSteps,
+        bestSelfExample: bestSelfExample,
+        criticalNotes: [
+          '⚠️ Use "contains" operator in logic blocks for multiple choice compatibility',
+          '⚠️ Test with users selecting different combinations from trigger field',
+          '⚠️ Ensure all question variants have consistent structure for data analysis',
+          '⚠️ Consider question length - multiple variants can make surveys long'
+        ]
+      };
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Dynamic Question Set Created Successfully:
+
+${JSON.stringify(result, null, 2)}
+
+## Implementation Guide:
+
+### Question Blocks (${questionBlocks.length} total):
+${questionBlocks.map((block, i) => `
+**Variant ${i + 1}**: ${block.uuid}
+- Trigger Value: "${args.conditionalOptionSets[i].triggerValue}"
+- Options: ${block.payload.options.length}
+- Label: "${block.payload.label}"`).join('')}
+
+### Logic Blocks (${logicBlocks.length} total):
+${logicBlocks.map((block, i) => `
+**Logic ${i + 1}**: ${block.uuid}
+- Condition: IF ${args.triggerField} contains "${block.payload.conditions[0].value}"
+- Action: Show question ${block.payload.conditions[0].jumpTo}`).join('')}
+
+## BestSelf Survey Example:
+This pattern solves the Q5/Q6 challenge where you need "single questions with multiple conditional option sets."
+
+Instead of creating separate Q5A, Q5B questions, you create multiple variants of Q5 that show different options based on Q4 priority selections.
+
+## Critical Implementation Steps:
+${implementationSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}
+
+## Data Analysis Notes:
+- All variants collect responses under the same question concept
+- Cross-reference with trigger field (${args.triggerField}) to understand context
+- Each response includes triggerValue metadata for analysis
+
+✅ This structure prevents the common mistake of creating separate questions for each condition, maintaining data consistency while providing dynamic user experience.`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error creating dynamic question set: ${error instanceof Error ? error.message : 'Unknown error'}`,
           },
         ],
       };
