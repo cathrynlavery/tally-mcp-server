@@ -1,12 +1,15 @@
 # Tally MCP Server
 
-A comprehensive Model Context Protocol (MCP) server for [Tally](https://lttlmg.ht/tally) form management. This server provides 16 powerful tools to manage forms, submissions, questions, and webhooks directly through Claude Desktop.
+A comprehensive Model Context Protocol (MCP) server for [Tally](https://lttlmg.ht/tally) form management. This server provides 18 powerful tools to manage forms, submissions, questions, webhooks, and advanced form building directly through Claude Desktop.
 
 > **Built by [@cathrynlavery](https://twitter.com/cathrynlavery)** | **Try [Claude Desktop](https://claude.ai/download)** | **Get [Tally Forms](https://lttlmg.ht/tally)**
 
 ## ✨ Features
 
-- **16 comprehensive tools** for complete Tally form management
+- **18 comprehensive tools** for complete Tally form management
+- **Advanced form building** with block types documentation and templates
+- **Form templates** for common use cases (contact, survey, registration, etc.)
+- **Complete block type reference** covering 20+ input, layout, and logic blocks
 - **Full API coverage** including advanced form editing capabilities
 - **Seamless Claude Desktop integration** via MCP protocol
 - **Type-safe** with proper JSON schema validation
@@ -105,13 +108,13 @@ TALLY_API_KEY=tally_your_actual_api_key_here
 2. Start a new conversation
 3. Try: **"Can you list my Tally forms?"**
 
-## 🛠️ Available Tools (16 Total)
+## 🛠️ Available Tools (18 Total)
 
 ### Forms Management (5 tools)
 - `get_tally_forms` - List all your forms
 - `create_tally_form` - Create new forms
 - `get_tally_form` - Get specific form details
-- `update_tally_form` - Update forms with full API support
+- `update_tally_form` - Update forms with full API support and enhanced block structure
 - `delete_tally_form` - Delete forms
 
 ### Submissions Management (3 tools)
@@ -128,6 +131,10 @@ TALLY_API_KEY=tally_your_actual_api_key_here
 - `update_tally_webhook` - Update existing webhooks
 - `delete_tally_webhook` - Delete webhooks
 
+### Form Building & Templates (2 tools)
+- `get_tally_block_types` - Get comprehensive documentation of all available form block types
+- `get_tally_form_templates` - Get pre-built form templates for common use cases
+
 ### Form Editing Helpers (3 tools)
 - `update_form_status` - Quick status changes (BLANK, PUBLISHED, DRAFT)
 - `update_form_settings` - Update common form settings
@@ -139,21 +146,39 @@ Once configured, you can interact naturally with your Tally forms:
 
 - **"Show me all my forms"**
 - **"Create a new customer feedback form"**
+- **"What types of form blocks are available in Tally?"**
+- **"Give me a contact form template"**
+- **"Build a survey with rating questions and multiple choice"**
 - **"Update my contact form to published status"**
 - **"Get the latest 10 submissions for form xyz"**
 - **"Set up email notifications for my survey"**
 - **"Add a webhook to my form that sends to my API"**
 - **"Delete submissions older than 30 days"**
 - **"Change my form password to 'newpassword123'"**
+- **"Show me templates for lead generation forms"**
 
 ## 🔧 Advanced Configuration
+
+### Enhanced Form Building Capabilities
+
+The server now includes comprehensive form building support:
+
+- **Block Type Reference**: Complete documentation of all 20+ Tally block types including input fields, layout elements, and logic blocks
+- **Form Templates**: Pre-built templates for contact forms, surveys, registration forms, and more
+- **Professional Structures**: Ready-to-use form layouts following best practices
+
+### Block Types Available
+
+- **Input Blocks**: Text, email, phone, date, multiple choice, checkboxes, dropdown, rating, ranking, file upload, signature, payment
+- **Layout Blocks**: Statement text, question groups, dividers, images, videos, embeds
+- **Logic Blocks**: Conditional jumps, calculators, hidden fields
 
 ### Custom Form Updates
 
 The `update_tally_form` tool supports comprehensive form editing including:
 
 - **Basic Properties**: name, status
-- **Form Structure**: complete blocks/questions array
+- **Form Structure**: complete blocks/questions array with detailed validation
 - **Advanced Settings**: 20+ options including notifications, styling, behavior
 - **Security**: password protection, submission limits
 - **Integrations**: redirects, custom CSS, data retention
