@@ -105,16 +105,32 @@ class TallyMcpServer {
                 },
                 blocks: {
                   type: 'array',
-                  description: 'Array of form blocks/questions structure',
+                  description: 'Array of form blocks/questions. Each block represents a form element like text input, multiple choice, etc. Use get_tally_block_types tool to see all available block types and their structures.',
                   items: {
                     type: 'object',
                     properties: {
-                      uuid: { type: 'string' },
-                      type: { type: 'string' },
-                      groupUuid: { type: 'string' },
-                      groupType: { type: 'string' },
-                      payload: { type: 'object' }
-                    }
+                      uuid: { 
+                        type: 'string',
+                        description: 'Unique identifier for the block'
+                      },
+                      type: { 
+                        type: 'string',
+                        description: 'Type of block (e.g., "INPUT_TEXT", "INPUT_EMAIL", "INPUT_MULTIPLE_CHOICE", "INPUT_CHECKBOXES", "INPUT_DROPDOWN", "INPUT_PHONE", "INPUT_DATE", "INPUT_FILE_UPLOAD", "INPUT_RATING", "INPUT_RANKING", "INPUT_SIGNATURE", "INPUT_PAYMENT", "LAYOUT_QUESTION_GROUP", "LAYOUT_STATEMENT", "LAYOUT_DIVIDER", "LAYOUT_IMAGE", "LAYOUT_VIDEO", "LAYOUT_EMBED", "LOGIC_JUMP", "LOGIC_CALCULATOR", "HIDDEN_FIELD")'
+                      },
+                      groupUuid: { 
+                        type: 'string',
+                        description: 'UUID of the group this block belongs to (for grouped blocks)'
+                      },
+                      groupType: { 
+                        type: 'string',
+                        description: 'Type of group this block belongs to'
+                      },
+                      payload: { 
+                        type: 'object',
+                        description: 'Block-specific configuration and properties. Structure varies by block type - use get_tally_block_types for detailed schemas.'
+                      }
+                    },
+                    required: ['uuid', 'type']
                   }
                 },
                 settings: {
@@ -514,6 +530,30 @@ class TallyMcpServer {
               required: ['formId'],
             },
           },
+          {
+            name: 'get_tally_block_types',
+            description: 'Get comprehensive information about all available Tally form block types and their structures for building forms',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+              required: [],
+            },
+          },
+          {
+            name: 'get_tally_form_templates',
+            description: 'Get pre-built form templates for common use cases (contact forms, surveys, registration, feedback, etc.)',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                templateType: {
+                  type: 'string',
+                  enum: ['contact', 'survey', 'registration', 'feedback', 'lead_generation', 'event_registration', 'job_application', 'newsletter_signup'],
+                  description: 'Type of form template to retrieve',
+                },
+              },
+              required: [],
+            },
+          },
         ],
       };
     });
@@ -555,6 +595,10 @@ class TallyMcpServer {
             return await this.updateFormSettings(args as { formId: string; isClosed?: boolean; submissionsLimit?: number; redirectOnCompletion?: string; hasProgressBar?: boolean; hasPartialSubmissions?: boolean; password?: string });
           case 'configure_form_notifications':
             return await this.configureFormNotifications(args as { formId: string; ownerNotifications?: any; respondentNotifications?: any });
+          case 'get_tally_block_types':
+            return await this.getTallyBlockTypes();
+          case 'get_tally_form_templates':
+            return await this.getTallyFormTemplates(args as { templateType?: string });
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -1035,6 +1079,580 @@ class TallyMcpServer {
           {
             type: 'text',
             text: `Error configuring form notifications: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+      };
+    }
+  }
+
+  private async getTallyBlockTypes(): Promise<{ content: Array<{ type: string; text: string }> }> {
+    const blockTypes = {
+      "INPUT_BLOCKS": {
+        "INPUT_TEXT": {
+          "description": "Single-line text input field",
+          "payload": {
+            "label": "string - Question text/label",
+            "placeholder": "string - Placeholder text",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "maxLength": "number - Maximum character limit",
+            "format": "string - Text format validation (e.g., 'email', 'url')"
+          }
+        },
+        "INPUT_TEXTAREA": {
+          "description": "Multi-line text input field",
+          "payload": {
+            "label": "string - Question text/label",
+            "placeholder": "string - Placeholder text",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "maxLength": "number - Maximum character limit",
+            "rows": "number - Number of text rows to display"
+          }
+        },
+        "INPUT_EMAIL": {
+          "description": "Email input field with validation",
+          "payload": {
+            "label": "string - Question text/label",
+            "placeholder": "string - Placeholder text",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field"
+          }
+        },
+        "INPUT_PHONE": {
+          "description": "Phone number input with country selection",
+          "payload": {
+            "label": "string - Question text/label",
+            "placeholder": "string - Placeholder text",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "defaultCountry": "string - Default country code (e.g., 'US', 'GB')"
+          }
+        },
+        "INPUT_NUMBER": {
+          "description": "Numeric input field",
+          "payload": {
+            "label": "string - Question text/label",
+            "placeholder": "string - Placeholder text",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "min": "number - Minimum value",
+            "max": "number - Maximum value",
+            "step": "number - Step increment"
+          }
+        },
+        "INPUT_DATE": {
+          "description": "Date picker input",
+          "payload": {
+            "label": "string - Question text/label",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "dateFormat": "string - Date format (e.g., 'MM/DD/YYYY')",
+            "minDate": "string - Minimum selectable date",
+            "maxDate": "string - Maximum selectable date"
+          }
+        },
+        "INPUT_TIME": {
+          "description": "Time picker input",
+          "payload": {
+            "label": "string - Question text/label",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "timeFormat": "string - Time format (12h or 24h)"
+          }
+        },
+        "INPUT_MULTIPLE_CHOICE": {
+          "description": "Single-select multiple choice question",
+          "payload": {
+            "label": "string - Question text/label",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "randomize": "boolean - Randomize option order",
+            "allowOther": "boolean - Allow 'Other' option with text input",
+            "options": [
+              {
+                "uuid": "string - Unique option ID",
+                "text": "string - Option display text",
+                "value": "string - Option value when selected"
+              }
+            ]
+          }
+        },
+        "INPUT_CHECKBOXES": {
+          "description": "Multi-select checkboxes question",
+          "payload": {
+            "label": "string - Question text/label",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "randomize": "boolean - Randomize option order",
+            "allowOther": "boolean - Allow 'Other' option with text input",
+            "minSelections": "number - Minimum required selections",
+            "maxSelections": "number - Maximum allowed selections",
+            "options": [
+              {
+                "uuid": "string - Unique option ID",
+                "text": "string - Option display text",
+                "value": "string - Option value when selected"
+              }
+            ]
+          }
+        },
+        "INPUT_DROPDOWN": {
+          "description": "Dropdown/select menu",
+          "payload": {
+            "label": "string - Question text/label",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "placeholder": "string - Placeholder text for dropdown",
+            "searchable": "boolean - Allow searching options",
+            "options": [
+              {
+                "uuid": "string - Unique option ID",
+                "text": "string - Option display text",
+                "value": "string - Option value when selected"
+              }
+            ]
+          }
+        },
+        "INPUT_RATING": {
+          "description": "Star or numeric rating input",
+          "payload": {
+            "label": "string - Question text/label",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "ratingType": "string - 'stars' or 'numbers'",
+            "min": "number - Minimum rating value",
+            "max": "number - Maximum rating value",
+            "leftLabel": "string - Label for low end",
+            "rightLabel": "string - Label for high end"
+          }
+        },
+        "INPUT_RANKING": {
+          "description": "Drag-and-drop ranking question",
+          "payload": {
+            "label": "string - Question text/label",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "randomize": "boolean - Randomize initial order",
+            "options": [
+              {
+                "uuid": "string - Unique option ID",
+                "text": "string - Option display text",
+                "value": "string - Option value"
+              }
+            ]
+          }
+        },
+        "INPUT_FILE_UPLOAD": {
+          "description": "File upload field",
+          "payload": {
+            "label": "string - Question text/label",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "maxFiles": "number - Maximum number of files",
+            "maxFileSize": "number - Maximum file size in MB",
+            "allowedTypes": "array - Allowed file types (e.g., ['.pdf', '.jpg', '.png'])"
+          }
+        },
+        "INPUT_SIGNATURE": {
+          "description": "Digital signature input",
+          "payload": {
+            "label": "string - Question text/label",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field"
+          }
+        },
+        "INPUT_PAYMENT": {
+          "description": "Payment processing field",
+          "payload": {
+            "label": "string - Question text/label",
+            "required": "boolean - Whether field is required",
+            "description": "string - Help text under the field",
+            "currency": "string - Currency code (e.g., 'USD', 'EUR')",
+            "amount": "number - Fixed amount or minimum amount",
+            "allowCustomAmount": "boolean - Allow user to enter custom amount"
+          }
+        }
+      },
+      "LAYOUT_BLOCKS": {
+        "LAYOUT_STATEMENT": {
+          "description": "Text-only block for instructions or information",
+          "payload": {
+            "content": "string - Rich text content (supports HTML)",
+            "fontSize": "string - Text size ('small', 'medium', 'large')",
+            "textAlign": "string - Text alignment ('left', 'center', 'right')"
+          }
+        },
+        "LAYOUT_QUESTION_GROUP": {
+          "description": "Groups multiple questions together",
+          "payload": {
+            "title": "string - Group title",
+            "description": "string - Group description",
+            "layout": "string - Layout type ('vertical', 'horizontal')"
+          }
+        },
+        "LAYOUT_DIVIDER": {
+          "description": "Visual separator between sections",
+          "payload": {
+            "style": "string - Divider style ('line', 'space', 'pattern')",
+            "thickness": "number - Divider thickness in pixels",
+            "color": "string - Divider color (hex code)"
+          }
+        },
+        "LAYOUT_IMAGE": {
+          "description": "Image display block",
+          "payload": {
+            "src": "string - Image URL or file ID",
+            "alt": "string - Alt text for accessibility",
+            "width": "number - Image width",
+            "height": "number - Image height",
+            "alignment": "string - Image alignment ('left', 'center', 'right')"
+          }
+        },
+        "LAYOUT_VIDEO": {
+          "description": "Video embed block",
+          "payload": {
+            "src": "string - Video URL (YouTube, Vimeo, etc.)",
+            "width": "number - Video width",
+            "height": "number - Video height",
+            "autoplay": "boolean - Auto-play video",
+            "controls": "boolean - Show video controls"
+          }
+        },
+        "LAYOUT_EMBED": {
+          "description": "HTML/iframe embed block",
+          "payload": {
+            "content": "string - HTML content or iframe code",
+            "height": "number - Embed height in pixels"
+          }
+        }
+      },
+      "LOGIC_BLOCKS": {
+        "LOGIC_JUMP": {
+          "description": "Conditional logic for form flow",
+          "payload": {
+            "conditions": [
+              {
+                "field": "string - Field UUID to check",
+                "operator": "string - Comparison operator ('equals', 'contains', 'greater_than', etc.)",
+                "value": "any - Value to compare against",
+                "jumpTo": "string - Block UUID to jump to if condition is met"
+              }
+            ],
+            "defaultJumpTo": "string - Default block UUID if no conditions are met"
+          }
+        },
+        "LOGIC_CALCULATOR": {
+          "description": "Calculation field based on other inputs",
+          "payload": {
+            "label": "string - Calculator label",
+            "formula": "string - Calculation formula using field references",
+            "displayFormat": "string - How to display the result",
+            "precision": "number - Decimal places for result"
+          }
+        },
+        "HIDDEN_FIELD": {
+          "description": "Hidden field for storing data",
+          "payload": {
+            "name": "string - Field name",
+            "value": "string - Hidden field value",
+            "source": "string - Data source ('url_param', 'cookie', 'fixed')"
+          }
+        }
+      }
+    };
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Comprehensive Tally Form Block Types Reference:
+
+${JSON.stringify(blockTypes, null, 2)}
+
+## Usage Instructions:
+
+When creating or updating form blocks, use the structure:
+{
+  "uuid": "unique-block-id",
+  "type": "BLOCK_TYPE_FROM_ABOVE",
+  "groupUuid": "group-id-if-applicable", 
+  "groupType": "group-type-if-applicable",
+  "payload": {
+    // Block-specific properties from the reference above
+  }
+}
+
+## Examples:
+
+### Text Input Block:
+{
+  "uuid": "text-block-1",
+  "type": "INPUT_TEXT",
+  "payload": {
+    "label": "What is your name?",
+    "placeholder": "Enter your full name",
+    "required": true,
+    "maxLength": 100
+  }
+}
+
+### Multiple Choice Block:
+{
+  "uuid": "choice-block-1", 
+  "type": "INPUT_MULTIPLE_CHOICE",
+  "payload": {
+    "label": "What is your favorite color?",
+    "required": true,
+    "options": [
+      {"uuid": "opt-1", "text": "Red", "value": "red"},
+      {"uuid": "opt-2", "text": "Blue", "value": "blue"},
+      {"uuid": "opt-3", "text": "Green", "value": "green"}
+    ]
+  }
+}
+
+### Statement Block:
+{
+  "uuid": "statement-block-1",
+  "type": "LAYOUT_STATEMENT", 
+  "payload": {
+    "content": "<h2>Welcome to our survey!</h2><p>Please fill out all required fields.</p>",
+    "fontSize": "medium",
+    "textAlign": "center"
+  }
+}
+
+Use these block types when building or updating Tally forms to create rich, interactive form experiences.`,
+        },
+      ],
+    };
+  }
+
+  private async getTallyFormTemplates(args: { templateType?: string }): Promise<{ content: Array<{ type: string; text: string }> }> {
+    const templates = {
+      contact: {
+        name: "Contact Form",
+        description: "Basic contact form with name, email, message",
+        blocks: [
+          {
+            uuid: "welcome-statement",
+            type: "LAYOUT_STATEMENT",
+            payload: {
+              content: "<h2>Contact Us</h2><p>We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>",
+              fontSize: "medium",
+              textAlign: "center"
+            }
+          },
+          {
+            uuid: "name-field",
+            type: "INPUT_TEXT",
+            payload: {
+              label: "Full Name",
+              placeholder: "Enter your full name",
+              required: true,
+              maxLength: 100
+            }
+          },
+          {
+            uuid: "email-field",
+            type: "INPUT_EMAIL",
+            payload: {
+              label: "Email Address",
+              placeholder: "your@email.com",
+              required: true
+            }
+          },
+          {
+            uuid: "subject-field",
+            type: "INPUT_TEXT",
+            payload: {
+              label: "Subject",
+              placeholder: "What is this regarding?",
+              required: true,
+              maxLength: 200
+            }
+          },
+          {
+            uuid: "message-field",
+            type: "INPUT_TEXTAREA",
+            payload: {
+              label: "Message",
+              placeholder: "Tell us how we can help you...",
+              required: true,
+              maxLength: 1000,
+              rows: 5
+            }
+          }
+        ]
+      },
+      survey: {
+        name: "Customer Satisfaction Survey",
+        description: "Comprehensive customer feedback survey",
+        blocks: [
+          {
+            uuid: "survey-intro",
+            type: "LAYOUT_STATEMENT",
+            payload: {
+              content: "<h2>Customer Satisfaction Survey</h2><p>Your feedback helps us improve our products and services.</p>",
+              fontSize: "medium",
+              textAlign: "center"
+            }
+          },
+          {
+            uuid: "overall-rating",
+            type: "INPUT_RATING",
+            payload: {
+              label: "How would you rate your overall experience?",
+              required: true,
+              ratingType: "stars",
+              min: 1,
+              max: 5,
+              leftLabel: "Poor",
+              rightLabel: "Excellent"
+            }
+          },
+          {
+            uuid: "service-quality",
+            type: "INPUT_MULTIPLE_CHOICE",
+            payload: {
+              label: "How would you describe our service quality?",
+              required: true,
+              options: [
+                { uuid: "excellent", text: "Excellent", value: "excellent" },
+                { uuid: "good", text: "Good", value: "good" },
+                { uuid: "average", text: "Average", value: "average" },
+                { uuid: "poor", text: "Poor", value: "poor" }
+              ]
+            }
+          },
+          {
+            uuid: "improvement-areas",
+            type: "INPUT_CHECKBOXES",
+            payload: {
+              label: "Which areas could we improve? (Select all that apply)",
+              required: false,
+              allowOther: true,
+              options: [
+                { uuid: "speed", text: "Response time", value: "speed" },
+                { uuid: "communication", text: "Communication", value: "communication" },
+                { uuid: "pricing", text: "Pricing", value: "pricing" },
+                { uuid: "features", text: "Product features", value: "features" }
+              ]
+            }
+          },
+          {
+            uuid: "additional-comments",
+            type: "INPUT_TEXTAREA",
+            payload: {
+              label: "Additional comments or suggestions",
+              placeholder: "Tell us more about your experience...",
+              required: false,
+              maxLength: 500,
+              rows: 4
+            }
+          }
+        ]
+      },
+      newsletter_signup: {
+        name: "Newsletter Signup",
+        description: "Simple email newsletter subscription form",
+        blocks: [
+          {
+            uuid: "newsletter-header",
+            type: "LAYOUT_STATEMENT",
+            payload: {
+              content: "<h2>Stay Updated</h2><p>Subscribe to our newsletter for the latest updates, tips, and exclusive content.</p>",
+              fontSize: "medium",
+              textAlign: "center"
+            }
+          },
+          {
+            uuid: "subscriber-name",
+            type: "INPUT_TEXT",
+            payload: {
+              label: "First Name",
+              placeholder: "Enter your first name",
+              required: true,
+              maxLength: 50
+            }
+          },
+          {
+            uuid: "subscriber-email",
+            type: "INPUT_EMAIL",
+            payload: {
+              label: "Email Address",
+              placeholder: "your@email.com",
+              required: true
+            }
+          },
+          {
+            uuid: "interests",
+            type: "INPUT_CHECKBOXES",
+            payload: {
+              label: "What topics interest you? (Select all that apply)",
+              required: false,
+              options: [
+                { uuid: "product-updates", text: "Product updates", value: "product-updates" },
+                { uuid: "industry-news", text: "Industry news", value: "industry-news" },
+                { uuid: "tips-tutorials", text: "Tips & tutorials", value: "tips-tutorials" },
+                { uuid: "special-offers", text: "Special offers", value: "special-offers" }
+              ]
+            }
+          }
+        ]
+      }
+    };
+
+    if (args.templateType && templates[args.templateType as keyof typeof templates]) {
+      const template = templates[args.templateType as keyof typeof templates];
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `${template.name} Template:
+
+${JSON.stringify(template, null, 2)}
+
+## Usage:
+Copy the blocks array from this template and use it in the update_tally_form tool's blocks parameter to create a form with this structure.
+
+Example:
+{
+  "formId": "your-form-id",
+  "name": "${template.name}",
+  "status": "DRAFT", 
+  "blocks": ${JSON.stringify(template.blocks, null, 2)}
+}`,
+          },
+        ],
+      };
+    } else {
+      // Return all available templates
+      const templateList = Object.entries(templates).map(([key, template]) => ({
+        type: key,
+        name: template.name,
+        description: template.description,
+        blockCount: template.blocks.length
+      }));
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Available Tally Form Templates:
+
+${JSON.stringify(templateList, null, 2)}
+
+To get a specific template, call this tool again with the templateType parameter set to one of: ${Object.keys(templates).join(', ')}
+
+Each template includes:
+- Pre-configured form blocks with appropriate field types
+- Proper validation and requirements
+- Professional styling and layout
+- Common use case patterns
+
+These templates provide a starting point that you can customize by modifying the blocks, adding new fields, or adjusting settings to match specific requirements.`,
           },
         ],
       };
