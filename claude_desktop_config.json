@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "tally": {
+      "command": "node",
+      "args": ["/Users/cathrynlavery/Coding/tally-mcp-server/start-server.js"],
+      "env": {
+        "TALLY_API_KEY": "tally_your_actual_api_key_here"
+      }
+    }
+  }
+} 
